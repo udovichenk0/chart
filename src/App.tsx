@@ -1,22 +1,33 @@
 import { useEffect } from 'react'
-import { init, dispose } from 'klinecharts'
+import { init, dispose, registerIndicator } from 'klinecharts'
 import './App.css'
-
-
 
 function App() {
   useEffect(() => {
     // initialize the chart
+
     const chart = init('chart')
+    const values = [
+      {
+        time: 1713857400000,
+        value: 3500
+      }, {
+        time: 1713859200000,
+        value: 3550
+      }
+    ]
     if(!chart) return
-    setInterval(() => {
+    indicator(values)
+    // setInterval(() => {
       getChartQuery()
       .then(mapData)
       .then((result) => {
         chart.applyNewData(result)
-        chart.createIndicator('MA', false, { id: 'candle_pane' })
+        // chart.createOverlay("priceLine")
+        chart.createIndicator('Custom', false, { id: 'candle_pane' })
+        // chart
       })
-    }, 2000)
+    // }, 2000)
 
     return () => {
       dispose('chart')
@@ -27,6 +38,52 @@ function App() {
       <div id="chart" style={{ width: 1200, height: 600 }}/>
     </div>
   )
+}
+
+function indicator(values: any){
+  registerIndicator({
+  name: 'Custom',
+  calc: (kLineDataList) => {
+    return kLineDataList.map(kLineData => ({ close: kLineData.close,open:kLineData.open, time: kLineData.timestamp, values }))
+  },
+  draw: ({
+    ctx,
+    barSpace,
+    visibleRange,
+    indicator,
+    xAxis,
+    yAxis
+  }) => {
+    const { from, to } = visibleRange
+
+    ctx.font = barSpace.gapBar + 'px' + ' Helvetica Neue'
+    ctx.textAlign = 'center'
+    const result = indicator.result
+    ctx.setLineDash([]);
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#874CCC"
+    ctx.lineWidth = 5;
+    let isInited = false
+    for (let i = from; i < to; i++) {
+      const data = result[i]
+      for(let k = 0; k < data.values.length; k++){
+        if(data.time == data.values[k].time){
+          const x = xAxis.convertToPixel(i)
+          const y = yAxis.convertToPixel(data.close)
+          if(!isInited){
+            isInited = true
+            ctx.moveTo(x,y)
+          }
+          ctx.lineTo(x,y)
+          break
+        }
+      }
+
+    }
+    ctx.stroke()
+    return false
+  }
+})
 }
 
 const getChartQuery = async () => {
