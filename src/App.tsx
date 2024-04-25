@@ -4,9 +4,9 @@ import './App.css'
 
 function App() {
   useEffect(() => {
-    // initialize the chart
 
     const chart = init('chart')
+    
     const values = [
       {
         time: 1713857400000,
@@ -18,16 +18,12 @@ function App() {
     ]
     if(!chart) return
     indicator(values)
-    // setInterval(() => {
       getChartQuery()
       .then(mapData)
       .then((result) => {
         chart.applyNewData(result)
-        // chart.createOverlay("priceLine")
         chart.createIndicator('Custom', false, { id: 'candle_pane' })
-        // chart
       })
-    // }, 2000)
 
     return () => {
       dispose('chart')
@@ -43,42 +39,47 @@ function App() {
 function indicator(values: any){
   registerIndicator({
   name: 'Custom',
-  calc: (kLineDataList) => {
-    return kLineDataList.map(kLineData => ({ close: kLineData.close,open:kLineData.open, time: kLineData.timestamp, values }))
+  calc: (kLineDataList):any => {
+    return {
+      kLineDataList: kLineDataList.map(kLineData => ({ close: kLineData.close,open:kLineData.open, time: kLineData.timestamp })),
+      values
+    }
   },
   draw: ({
     ctx,
-    barSpace,
     visibleRange,
     indicator,
     xAxis,
     yAxis
-  }) => {
+  }:any) => {
     const { from, to } = visibleRange
 
-    ctx.font = barSpace.gapBar + 'px' + ' Helvetica Neue'
-    ctx.textAlign = 'center'
     const result = indicator.result
     ctx.setLineDash([]);
+
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#874CCC"
     ctx.lineWidth = 5;
     let isInited = false
-    for (let i = from; i < to; i++) {
-      const data = result[i]
-      for(let k = 0; k < data.values.length; k++){
-        if(data.time == data.values[k].time){
-          const x = xAxis.convertToPixel(i)
-          const y = yAxis.convertToPixel(data.close)
-          if(!isInited){
-            isInited = true
-            ctx.moveTo(x,y)
-          }
-          ctx.lineTo(x,y)
-          break
-        }
-      }
 
+    const kv = toKv(result.values)
+
+    for (let i = from; i < to; i++) {
+      const data = result.kLineDataList[i]
+      const formattedTime = formatTime(timestampToStrDate(data.time))
+
+      if(!kv[formattedTime]) continue
+
+      if(formattedTime == kv[formattedTime].time){
+        const x = xAxis.convertToPixel(i)
+        const y = yAxis.convertToPixel(data.close)
+        if(!isInited){
+          isInited = true
+          ctx.moveTo(x,y)
+          continue
+        }
+        ctx.lineTo(x,y)
+      }
     }
     ctx.stroke()
     return false
@@ -111,6 +112,30 @@ function mapData(data:any){
     }
     return res
   })
+}
+
+function toKv(values:any[]){
+  return values.reduce((acc, item) => ({
+      ...acc,
+      [formatTime(item.time)]: {
+        value: item.value,
+        time: formatTime(item.time)
+      }
+  }), {})
+}
+
+function formatTime(strDate: string){
+  const date = new Date(strDate)
+  const y = date.getFullYear()
+  const m = date.getMonth()
+  const d = date.getDate()
+  const hh = date.getHours()
+  const mm = date.getMinutes()
+  return `${y}-${m}-${d} ${hh}:${mm}`
+}
+
+function timestampToStrDate(timestamp: number){
+  return new Date(timestamp).toString()
 }
 
 export default App
