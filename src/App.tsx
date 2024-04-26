@@ -7,6 +7,7 @@ function App() {
   const [firstLine, setFirstLine] = useState<any[]>()
   const [secondLine, setSecondLine] = useState<any[]>()
   const [thirdLine, setThirdLine] = useState<any[]>()
+  const [data, setData] = useState<any>()
 
   useEffect(() => {
       //@ts-ignore
@@ -15,11 +16,12 @@ function App() {
     const chart = anychart.stock();
     chart.tooltip(false);
     const plot = chart.plot(0);
-    let chartData
+    let chartData:any
     if(!isInitted){
     getChartQuery()
       .then(mapData).then((data) => {
         chartData = table.addData(data);
+
         //@ts-ignore
         setPlot(plot)
         
@@ -33,7 +35,14 @@ function App() {
         chart.container('container');
         chart.draw();
         init(true)
-      }).then(() => {
+        return data
+      }).then((data) => {
+        setTimeout(() => {
+          const timestamp = addMinutesToTimestamp(data[data.length - 1][0], 30)
+          const newData = [timestamp, 0.000295, 0.0002968, 0.0002943, 0.0002965]
+          //adds a new data to the end of a chart
+          chartData.addData([newData]);
+        }, 2000)
         // set up websocket connection to get data in real time
 
         /**
@@ -91,14 +100,19 @@ function drawLine(plot:any, line: any, setLine:any, color: string){
   } else {
     const timestamp = line[line.length - 1][1][0]
     const value = line[line.length - 1][1][1]
-    var date = new Date(timestamp);
     
-    date.setMinutes(date.getMinutes() + 30);
-    var updatedTimestamp = date.getTime();
+    var updatedTimestamp = addMinutesToTimestamp(timestamp, 30)
     const newValue = (Math.random() * 0.00001) + 0.0003
 
     const newLine = [[timestamp, value], [updatedTimestamp, newValue]]
     plot.line(newLine).stroke(color);
     setLine([...line, newLine])
   }
+}
+
+
+function addMinutesToTimestamp(timestamp:number, m: number){
+  var date = new Date(timestamp);
+  date.setMinutes(date.getMinutes() + 30);
+  return date.getTime()
 }
