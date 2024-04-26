@@ -3,6 +3,7 @@ import './App.css'
 
 function App() {
   const [plot, setPlot] = useState<any>()
+  const [isInitted, init] = useState(false)
   const [firstLine, setFirstLine] = useState<any[]>()
   const [secondLine, setSecondLine] = useState<any[]>()
   const [thirdLine, setThirdLine] = useState<any[]>()
@@ -14,11 +15,12 @@ function App() {
     const chart = anychart.stock();
     chart.tooltip(false);
     const plot = chart.plot(0);
-    getChartQuery().then(mapData).then((data) => {
-      table.addData(data);
-      //@ts-ignore
-      anychart.onDocumentReady(function() {
-  
+    let chartData
+    if(!isInitted){
+    getChartQuery()
+      .then(mapData).then((data) => {
+        chartData = table.addData(data);
+        //@ts-ignore
         setPlot(plot)
         
         const mapping2 = table.mapAs();
@@ -30,8 +32,18 @@ function App() {
         series.name("ACME Corp. stock prices");
         chart.container('container');
         chart.draw();
-    })
-    });
+        init(true)
+      }).then(() => {
+        // set up websocket connection to get data in real time
+
+        /**
+         * const ws = new Websocket()
+         * ws.addEventListener("message", (event) => {
+         *  chartData.addData(event.data)
+         * })
+         */
+      })
+    }
   }, [])
   useEffect(() => {
     const interval = setInterval(() => {
