@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@canvasjs/charts": "^3.8.2",
+    "@canvasjs/react-charts": "^1.0.2",
+    "anychart": "^8.12.1",
     "klinecharts": "^9.8.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

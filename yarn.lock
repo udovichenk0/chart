@@ -214,6 +214,16 @@
     "@babel/helper-validator-identifier" "^7.22.20"
     to-fast-properties "^2.0.0"
 
+"@canvasjs/charts@^3.8.2":
+  version "3.8.2"
+  resolved "https://registry.yarnpkg.com/@canvasjs/charts/-/charts-3.8.2.tgz#3786566e79c99b4c7c6e888455793ca16ad51f3c"
+  integrity sha512-ON3TQ24dTD57K/JaD8t/ro0/9/ENrSnz8UK7KUgfzcogTR8JsyLX3J2gZyv2Qr/czTykugQx2J/O53zg9atZog==
+
+"@canvasjs/react-charts@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@canvasjs/react-charts/-/react-charts-1.0.2.tgz#56b1fa72018522240ce03106426f4ee57959112f"
+  integrity sha512-PZgJlDbGdMF4AN/KvrvGY9X50EByJMZ7MHfQB/U0aky9Onn9mt0CpsvwudBsBe+DofaV3SHR4SHn/Wfo/pubDw==
+
 "@esbuild/aix-ppc64@0.20.2":
   version "0.20.2"
   resolved "https://registry.yarnpkg.com/@esbuild/aix-ppc64/-/aix-ppc64-0.20.2.tgz#a70f4ac11c6a1dfc18b8bbb13284155d933b9537"
@@ -721,6 +731,11 @@ ansi-styles@^4.1.0:
   integrity sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg==
   dependencies:
     color-convert "^2.0.1"
+
+anychart@^8.12.1:
+  version "8.12.1"
+  resolved "https://registry.yarnpkg.com/anychart/-/anychart-8.12.1.tgz#ecf168e24bd6451b1b71d8620960f9299ec4bb84"
+  integrity sha512-j3GqX7suwu9skR0Y3gGo79+PGudqsW4a3//HBYF/KbPZmmlKVDjv0Fw+RO4TLtgf9ep/jXThZZfM/3UQrk2Y9g==
 
 argparse@^2.0.1:
   version "2.0.1"

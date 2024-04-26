@@ -1,141 +1,92 @@
-import { useEffect } from 'react'
-import { init, dispose, registerIndicator } from 'klinecharts'
+import { useEffect, useState } from 'react'
 import './App.css'
 
 function App() {
-  useEffect(() => {
+  const [plot, setPlot] = useState<any>()
+  const [firstLine, setFirstLine] = useState<any[]>()
+  const [secondLine, setSecondLine] = useState<any[]>()
+  const [thirdLine, setThirdLine] = useState<any[]>()
 
-    const chart = init('chart')
-    
-    const values = [
-      {
-        time: 1713857400000,
-        value: 3500
-      }, {
-        time: 1713859200000,
-        value: 3550
-      }
-    ]
-    if(!chart) return
-    indicator(values)
-      getChartQuery()
-      .then(mapData)
-      .then((result) => {
-        chart.applyNewData(result)
-        chart.createIndicator('Custom', false, { id: 'candle_pane' })
-      })
+  useEffect(() => {
+      //@ts-ignore
+    const table = anychart.data.table();
+      //@ts-ignore
+    const chart = anychart.stock();
+    chart.tooltip(false);
+    const plot = chart.plot(0);
+    getChartQuery().then(mapData).then((data) => {
+      table.addData(data);
+      //@ts-ignore
+      anychart.onDocumentReady(function() {
+  
+        setPlot(plot)
+        
+        const mapping2 = table.mapAs();
+        mapping2.addField('open', 1);
+        mapping2.addField('high', 2);
+        mapping2.addField('low', 3);
+        mapping2.addField('close', 4);
+        var series = chart.plot(0).candlestick(mapping2);
+        series.name("ACME Corp. stock prices");
+        chart.container('container');
+        chart.draw();
+    })
+    });
+  }, [])
+  useEffect(() => {
+    const interval = setInterval(() => {
+      drawLine(plot, firstLine, setFirstLine, "red")
+      drawLine(plot, secondLine, setSecondLine, "green")
+      drawLine(plot, thirdLine, setThirdLine, "blue")
+    }, 2000)
 
     return () => {
-      dispose('chart')
+      clearInterval(interval)
     }
-  }, [])
+  }, [firstLine, plot])
   return (
-    <div id='container'>
-      <div id="chart" style={{ width: 1200, height: 600 }}/>
-    </div>
+    <div id="container" style={{width: "100%", height: "400px"}}></div>
   )
 }
 
-function indicator(values: any){
-  registerIndicator({
-  name: 'Custom',
-  calc: (kLineDataList):any => {
-    return {
-      kLineDataList: kLineDataList.map(kLineData => ({ close: kLineData.close,open:kLineData.open, time: kLineData.timestamp })),
-      values
-    }
-  },
-  draw: ({
-    ctx,
-    visibleRange,
-    indicator,
-    xAxis,
-    yAxis
-  }:any) => {
-    const { from, to } = visibleRange
-
-    const result = indicator.result
-    ctx.setLineDash([]);
-
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = "#874CCC"
-    ctx.lineWidth = 5;
-    let isInited = false
-
-    const kv = toKv(result.values)
-
-    for (let i = from; i < to; i++) {
-      const data = result.kLineDataList[i]
-      const formattedTime = formatTime(timestampToStrDate(data.time))
-
-      if(!kv[formattedTime]) continue
-
-      if(formattedTime == kv[formattedTime].time){
-        const x = xAxis.convertToPixel(i)
-        const y = yAxis.convertToPixel(data.close)
-        if(!isInited){
-          isInited = true
-          ctx.moveTo(x,y)
-          continue
-        }
-        ctx.lineTo(x,y)
-      }
-    }
-    ctx.stroke()
-    return false
-  }
-})
-}
-
 const getChartQuery = async () => {
-  const res = await fetch('https://api.binance.com/api/v3/klines?symbol=1000SATSUSDT&interval=30m&limit=200')
+  const res = await fetch('https://api.binance.com/api/v3/klines?symbol=1000SATSUSDT&interval=30m&limit=100')
   const result = await res.json()
   return result
 }
 
 function mapData(data:any){
   return data.map((item:any) => {
-    const open = +item[1] * 10000000
-    const high = +item[2] * 10000000
-    const low = +item[3]* 10000000
-    const close = +item[4]* 10000000
-    const volume = +item[5]* 10000000
+    const open = +item[1]
+    const high = +item[2]
+    const low = +item[3]
+    const close = +item[4]
     const timestamp = +item[0]
-    const res = {
-      open,
-      high,
-      low,
-      close,
-      volume,
-      turnover: (open + high + low + close) / 4 * volume,
-      timestamp: timestamp
-    }
-    return res
+    return [timestamp, open, high, low, close]
   })
 }
-
-function toKv(values:any[]){
-  return values.reduce((acc, item) => ({
-      ...acc,
-      [formatTime(item.time)]: {
-        value: item.value,
-        time: formatTime(item.time)
-      }
-  }), {})
-}
-
-function formatTime(strDate: string){
-  const date = new Date(strDate)
-  const y = date.getFullYear()
-  const m = date.getMonth()
-  const d = date.getDate()
-  const hh = date.getHours()
-  const mm = date.getMinutes()
-  return `${y}-${m}-${d} ${hh}:${mm}`
-}
-
-function timestampToStrDate(timestamp: number){
-  return new Date(timestamp).toString()
-}
-
 export default App
+
+function drawLine(plot:any, line: any, setLine:any, color: string){
+  if(!plot) return
+  if(!line){
+    const lineData1 = [
+      [Date.UTC(2024, 3, 25, 9, 30, 0), 0.0003],
+      [Date.UTC(2024, 3, 25, 10, 0, 0), 0.0003],
+    ]
+    plot.line(lineData1).stroke(color)
+    setLine([lineData1])
+  } else {
+    const timestamp = line[line.length - 1][1][0]
+    const value = line[line.length - 1][1][1]
+    var date = new Date(timestamp);
+    
+    date.setMinutes(date.getMinutes() + 30);
+    var updatedTimestamp = date.getTime();
+    const newValue = (Math.random() * 0.00001) + 0.0003
+
+    const newLine = [[timestamp, value], [updatedTimestamp, newValue]]
+    plot.line(newLine).stroke(color);
+    setLine([...line, newLine])
+  }
+}
